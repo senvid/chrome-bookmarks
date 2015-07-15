@@ -25,57 +25,38 @@
 //     }
 // }
 
-
 function parseTree() {
     var tree = chrome.bookmarks.getTree(
         function(tree) {
-            treeNodes(tree);
+            treeJson = tree;
+            setStorage(boolTag,setStorageCallBack);
         });
 };
 
-function treeNodes(tree) {
-    for (var i = 0; i < tree.length; i++) {
-        subNodes(tree[i]);
-    };
-}
-
-function subNodes(treeObj) {
-    //dateAdded: treeObj.dateAdded,
-    //dateGroupModified: treeObj.dateGroupModified,
-    treeJson = {
-        children: treeObj.children,
-        id: treeObj.id,
-        index: treeObj.index,
-        parentId: treeObj.parentId,
-        title: treeObj.title,
-        url: treeObj.url
-    };
-    //console.log(treeJson);
-    //if true call setStorage
-    if (boolTag) {
-        localStorage.setItem(UID, JSON.stringify(treeJson));
-        boolTag = false;
-        console.log(boolTag);
-    };
-}
-
 //first run
 function onload() {
-    if (getStorage() != null) {
+    if (getStorage(UID) != null) {
         console.log("get localStorage..")
-            //console.log(JSON.parse(getStorage()));
     } else {
-        setStorage();
-        //console.log(JSON.parse(localStorage.getItem(UID)));
+        boolTag = true;
+        parseTree();
     };
 }
 
 //set localStorage
-function setStorage() {
-    console.log("start parseTree...");
-    // suspend use Storage
-    boolTag = true;
-    parseTree();
+function setStorage(boolTag,call) {
+    //if true call setStorage
+    if (!boolTag) {
+        console.log("DO not need to set Storage...");
+        return
+    };
+    console.log("start set Storage");
+    localStorage.setItem(UID, JSON.stringify(treeJson));
+    call();
+}
+
+function setStorageCallBack() {
+    boolTag = false;
 }
 
 //set tag as false
@@ -127,11 +108,7 @@ function compareJson(a, b) {
             };
             console.log(a.id, a.index, a.parentId, a.title, a.url)
         };
-
-
     };
-
-
 
     // if (a.id != b.id) {
     //     return a;
@@ -167,6 +144,7 @@ var boolTag = false;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
     onload();
+
     //setStorage();
     //getDiff();
     // document.addEventListener("somethingAPI", function() {
