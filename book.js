@@ -29,7 +29,7 @@ function parseTree() {
     var tree = chrome.bookmarks.getTree(
         function(tree) {
             treeJson = tree;
-            setStorage(boolTag,setStorageCallBack);
+            setStorage(boolTag, setStorageCallBack);
         });
 };
 
@@ -44,7 +44,7 @@ function onload() {
 }
 
 //set localStorage
-function setStorage(boolTag,call) {
+function setStorage(boolTag, call) {
     //if true call setStorage
     if (!boolTag) {
         console.log("DO not need to set Storage...");
@@ -75,15 +75,17 @@ function onclear() {
 }
 
 function getDiff() {
-    console.log("start sync..");
     var bakTree = getStorage("old");
     var curTree = getStorage("new");
     if (bakTree != null && curTree != null) {
-        compareJson(bakTree, curTree);
+        console.log("start sync..");
+        compareJson(bakTree);
     };
-}
+};
 
+/*
 function compareJson(a, b) {
+ 
     var aProp = Object.getOwnPropertyNames(a);
     var bProp = Object.getOwnPropertyNames(b);
     var arr = new Array([]);
@@ -136,17 +138,61 @@ function compareJson(a, b) {
     //     }
     // }
 }
+*/
+
+function compareJson(a) {
+
+    // for (var item in a) {
+    //     console.log(item);
+    // };
+    // console.log(count);
+    // count++;
+    // //console.log(a);
+    // compareJson(a[0]);
+    //a = [{x:[{v:[],b,b},{}],a,b}] array
+    //a[0] outside {} obj    //id =0 root
+    //a[0].attr    arrt      //id=1  bookmark bar  id=2 other bar
+    //children  array
+    //a[0].children   obj [bookmark othr bar]
+    //a[0].children.children[0] [bookmark .. ] obj
+    //a[0].children[0].children[0] [bookmark .. ] sub obj
+    //a[0].children.children[1] [other bar.. ]
+    //a[0].children.children[0][0]   bookmark sub obj
+    //a[0].children.children[0][0].children   bookmark sub sub array
+    //a[0].children.children[0][0].children[0]   bookmark sub sub abj
+    // console.log(a);
+    // console.log(a[0]);
+    // console.log(a[0].children[1].id);
+    // console.log(a[0].children[4]);
+    // console.log(a[0].children[4].children);
+    // console.log(a[0].children[4].children[0]);
+    
+//     if (length in a) {
+//         console.log("yes : " + a.length);
+//         for (var i = 0; i < a.length; i++) {
+//             var id = a.id;
+//             if (id != "0" && id != undefined) {
+//                 aList.push(id)
+//             };
+//         };
+//     };
+//     console.log(aList);
+//     if (a.children) {
+//         compareJson(a.children);
+//     };
+// };
 
 //start script
 var treeJson = new Object;
-var UID = "old";
+var UID = "new";
 var boolTag = false;
+var aList = new Array();
+var count = 0;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
-    onload();
+    //onload();
 
-    //setStorage();
-    //getDiff();
+    getDiff();
     // document.addEventListener("somethingAPI", function() {
     //     onload();
     // });
