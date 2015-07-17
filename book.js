@@ -75,11 +75,14 @@ function onclear() {
 }
 
 function getDiff() {
+    var curTree = getStorage("cur");
     var bakTree = getStorage("old");
-    var curTree = getStorage("new");
+    var newTree = getStorage("new");
     if (bakTree != null && curTree != null) {
         console.log("start sync..");
-        compareJson(bakTree);
+        //compareJson(bakTree);
+        //compareJson(curTree);
+        compareJson(newTree);
     };
 };
 
@@ -141,7 +144,6 @@ function compareJson(a, b) {
 */
 
 function compareJson(a) {
-
     // for (var item in a) {
     //     console.log(item);
     // };
@@ -166,21 +168,33 @@ function compareJson(a) {
     // console.log(a[0].children[4]);
     // console.log(a[0].children[4].children);
     // console.log(a[0].children[4].children[0]);
-    
-//     if (length in a) {
-//         console.log("yes : " + a.length);
-//         for (var i = 0; i < a.length; i++) {
-//             var id = a.id;
-//             if (id != "0" && id != undefined) {
-//                 aList.push(id)
-//             };
-//         };
-//     };
-//     console.log(aList);
-//     if (a.children) {
-//         compareJson(a.children);
-//     };
-// };
+    if (a.id != undefined) {
+        aList.push(a.id);
+        //console.log(Object.getOwnPropertyNames(a));
+        //console.log(a.children);
+        if (a.children) {
+            for (var i = 0; i < a.children.length; i++) {
+                aList.push(a.children[i].id);
+                compareJson(a.children[i]);
+            };
+        } else {};
+
+    } else {
+        compareJson(a[0]);
+    };
+
+    // if (length in a) {
+    //     console.log("yes : " + a.length);
+    //     for (var i = 0; i < a.length; i++) {
+    //         var id = a.id;
+    //         if (id != "0" && id != undefined) {
+    //             aList.push(id)
+    //         };
+    //     };
+    // };
+    // console.log(aList);
+
+}
 
 //start script
 var treeJson = new Object;
@@ -193,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //onload();
 
     getDiff();
+    console.log(aList);
     // document.addEventListener("somethingAPI", function() {
     //     onload();
     // });
