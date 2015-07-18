@@ -90,88 +90,64 @@ function getList() {
 };
 
 //prototype method unique
+//use: myArray.unique()
 Array.prototype.unique = function() {
-    var n = {},
-        r = [],
-        len = this.length,
-        val, type;
+    var hash = {};
+    var r = [];
+    var val;
+    var type;
     for (var i = 0; i < this.length; i++) {
         val = this[i];
         type = typeof val;
-        if (!n[val]) {
-            n[val] = [type];
+        if (!hash[val]) {
+            hash[val] = [type];
             r.push(val);
-        } else if (n[val].indexOf(type) < 0) {
-            n[val].push(type);
+        } else if (hash[val].indexOf(type) < 0) {
+            hash[val].push(type);
             r.push(val);
         }
     }
     return r;
 }
 
-//different of the two list
+//union no repeat
+//use: l = Array.union(a,b)
+Array.union = function(a, b) {
+    return a.concat(b).unique();
+}
+
+//get intersect
+//use l = a.intersect(b)
+Array.prototype.intersect = function(a) {
+    var hash = {};
+    var r = [];
+    var type;
+    var val;
+    for (var i = 0; i < a.length; i++) {
+        val = a[i];
+        type = typeof val;
+        if (!hash[val]) {
+            hash[val] = [type];
+        } else if (hash[val].indexOf(type) < 0) {
+            hash[val].push(type);
+        }
+
+    };
+    for (var i = 0; i < this.length; i++) {
+        if (hash[this[i]]) {
+            r.push(this[i])
+        };
+    };
+    console.log(hash);
+    return r;
+}
+
+//different set of the two list
 function getDiff(a, b) {
     // body...
 }
 
-
-/*
-function compareJson(a, b) {
- 
-    var aProp = Object.getOwnPropertyNames(a);
-    var bProp = Object.getOwnPropertyNames(b);
-    var arr = new Array([]);
-    console.log(aProp);
-    // if (aProp != bProp) {
-    //     return a;
-    // }
-    for (var i = 0; i < aProp.length; i++) {
-        var aList = aProp[i];
-        var bList = bProp[i];
-        if (aList == "children" || a[aList] == b[bList]) {
-            continue;
-        };
-        // console.log(typeof(s));
-        // console.log(typeof(a[s]));
-    };
-    if (a.children) {
-        console.log(a.children.length);
-        for (var i = 0; i < a.children.length; i++) {
-            if (b.children) {
-                compareJson(a.children[i], b.children[i]);
-            };
-            console.log(a.id, a.index, a.parentId, a.title, a.url)
-        };
-    };
-
-    // if (a.id != b.id) {
-    //     return a;
-    // }
-    // if (a.title != b.title) {
-    //     return a;
-    // }
-
-    // if (typeof(a.index) != "undefined" && typeof(b.index) != "undefined") {
-    //     if (a.index != b.index) {
-    //         return a;
-    //     }
-    // }
-
-    // if (typeof(a.url) != "undefined" && typeof(b.url) != "undefined") {
-    //     if (a.url != b.url) {
-    //         return a;
-    //     }
-    // } else {
-    //     if (a.children.length != b.children.length) {
-    //         return a;
-    //     }
-    //     for (var i = 0; i < a.children.length; i++) {
-    //         compareJson(a.children[i], b.children[i]);
-    //     }
-    // }
-}
-*/
-
+//get id from Array
 function compareJson(a) {
     if (a.id != undefined) {
         if (a.url != undefined) {
@@ -204,8 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
     //onload();
 
-    getList();
-
+    //getList();
+    var c1 = [1, 5, 5, 5, 9, "5", "5", "", "1", "7"];
+    var c2 = [1, 5, 5, 30, "5", ""];
+    var c3 = [1, 5, ""];
+    var c4 = [1, "5", ""];
+    //console.log(c1.unique());
+    //console.log(c2.unique());
+    //console.log(c1.unique().intersect(c2.unique()));
+    console.log(c4.intersect(c3));
     // document.addEventListener("somethingAPI", function() {
     //     onload();
     // });
