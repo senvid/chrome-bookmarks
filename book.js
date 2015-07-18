@@ -74,17 +74,46 @@ function onclear() {
     localStorage.clear();
 }
 
-function getDiff() {
+//json to list
+function getList() {
     var curTree = getStorage("cur");
-    var bakTree = getStorage("old");
+    var bakTree = getStorage("bak");
     var newTree = getStorage("new");
     if (bakTree != null && curTree != null) {
         console.log("start sync..");
-        //compareJson(bakTree);
-        //compareJson(curTree);
-        compareJson(newTree);
+        var newList = compareJson(newTree);
+        aList = [];
+        var bakList = compareJson(bakTree);
+        console.log(newList, "new");
+        console.log(bakList, "bak");
     };
 };
+
+//prototype method unique
+Array.prototype.unique = function() {
+    var n = {},
+        r = [],
+        len = this.length,
+        val, type;
+    for (var i = 0; i < this.length; i++) {
+        val = this[i];
+        type = typeof val;
+        if (!n[val]) {
+            n[val] = [type];
+            r.push(val);
+        } else if (n[val].indexOf(type) < 0) {
+            n[val].push(type);
+            r.push(val);
+        }
+    }
+    return r;
+}
+
+//different of the two list
+function getDiff(a, b) {
+    // body...
+}
+
 
 /*
 function compareJson(a, b) {
@@ -144,56 +173,25 @@ function compareJson(a, b) {
 */
 
 function compareJson(a) {
-    // for (var item in a) {
-    //     console.log(item);
-    // };
-    // console.log(count);
-    // count++;
-    // //console.log(a);
-    // compareJson(a[0]);
-    //a = [{x:[{v:[],b,b},{}],a,b}] array
-    //a[0] outside {} obj    //id =0 root
-    //a[0].attr    arrt      //id=1  bookmark bar  id=2 other bar
-    //children  array
-    //a[0].children   obj [bookmark othr bar]
-    //a[0].children.children[0] [bookmark .. ] obj
-    //a[0].children[0].children[0] [bookmark .. ] sub obj
-    //a[0].children.children[1] [other bar.. ]
-    //a[0].children.children[0][0]   bookmark sub obj
-    //a[0].children.children[0][0].children   bookmark sub sub array
-    //a[0].children.children[0][0].children[0]   bookmark sub sub abj
-    // console.log(a);
-    // console.log(a[0]);
-    // console.log(a[0].children[1].id);
-    // console.log(a[0].children[4]);
-    // console.log(a[0].children[4].children);
-    // console.log(a[0].children[4].children[0]);
     if (a.id != undefined) {
-        aList.push(a.id);
-        //console.log(Object.getOwnPropertyNames(a));
-        //console.log(a.children);
-        if (a.children) {
+        if (a.url != undefined) {
+            aList.push([a.id, a.index, a.parentId, a.title, a.url]);
+        };
+        if (a.children != undefined) {
             for (var i = 0; i < a.children.length; i++) {
-                aList.push(a.children[i].id);
-                compareJson(a.children[i]);
+                //aList.push(a.children[i].id);
+                if (a.children[i].url != undefined) {
+                    compareJson(a.children[i]);
+                } else {
+                    aList.push([a.children[i].id, a.children[i].index, a.children[i].parentId, a.children[i].title]);
+                    compareJson(a.children[i]);
+                };
             };
-        } else {};
-
+        };
     } else {
         compareJson(a[0]);
     };
-
-    // if (length in a) {
-    //     console.log("yes : " + a.length);
-    //     for (var i = 0; i < a.length; i++) {
-    //         var id = a.id;
-    //         if (id != "0" && id != undefined) {
-    //             aList.push(id)
-    //         };
-    //     };
-    // };
-    // console.log(aList);
-
+    return aList
 }
 
 //start script
@@ -206,8 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
     //onload();
 
-    getDiff();
-    console.log(aList);
+    getList();
+
     // document.addEventListener("somethingAPI", function() {
     //     onload();
     // });
