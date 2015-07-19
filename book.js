@@ -119,26 +119,35 @@ Array.union = function(a, b) {
 //get intersect
 //use l = a.intersect(b)
 Array.prototype.intersect = function(a) {
+    //{val:{num:1,str:2},...}
     var hash = {};
     var r = [];
     var type;
     var val;
+
     for (var i = 0; i < a.length; i++) {
+        //{num:1,str:2}
+        var h = {};
         val = a[i];
         type = typeof val;
         if (!hash[val]) {
-            hash[val] = [type];
-        } else if (hash[val].indexOf(type) < 0) {
-            hash[val].push(type);
-        }
-
-    };
-    for (var i = 0; i < this.length; i++) {
-        if (hash[this[i]]) {
-            r.push(this[i])
+            h[type] = 1;
+            hash[val] = h;
+        } else {
+            if (!hash[val][type]) {
+                hash[val][type] = 1;
+            } else {
+                hash[val][type]++;
+            };
         };
     };
-    console.log(hash);
+    for (var i = 0; i < this.length; i++) {
+        type = typeof this[i];
+        if (hash[this[i]] && hash[this[i]][type] > 0) {
+            hash[this[i]][type]--;
+            r.push(this[i]);
+        };
+    };
     return r;
 }
 
