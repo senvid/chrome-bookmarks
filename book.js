@@ -93,10 +93,82 @@ Array.prototype.complement = function(a) {
     for (var i = 0; i < this.length; i++) {
         var n = a.indexOf(this[i]);
         if (n != -1) {
-            a.splice(n,1);
+            a.splice(n, 1);
         };
     };
     return a;
+}
+
+//array sort method
+function compare(x, y) {
+    if (x[2] == y[2]) {
+        return x[1] - y[1];
+    } else {
+        return x[2] - y[2];
+    };
+}
+
+//hash table sort function
+function sortHash(a) {
+    var r = [];
+    var i = 0;
+    for (var item in a) {
+        r[i] = a[item];
+        i++;
+    };
+    r.sort(compare);
+    return r;
+}
+
+//union two hash table
+function unionHash(a, b) {
+    for (var key in b) {
+        a[key] = b[key];
+    };
+    return a;
+}
+
+//sync 
+function sync(a) {
+    // var s = [
+    //     [1, 2, 3],
+    //     [3, 2, 5],
+    //     [5, 6, 1],
+    //     [2, 4, 1],
+    //     [2, 3, 2]
+    // ];
+    for (var i in a) {
+        var id = i[0];
+        var index = i[1];
+        var parentId = i[2];
+        var title = i[3];
+        var url = i[4];
+        var newNode = {
+            "id": id,
+            "index": index,
+            "parentId": parentId,
+            "title": title
+        };
+        if (typeof(url) != "number") {
+            newNode["url"] = url;
+        };
+        chrome.bookmarks.create(newNode, function(id) {
+            console.log("created : " + id);
+            node = chrome.bookmarks.get(a[0], function(node) {
+                if (node != undefined) {
+                    if (node[0]["url" == undefined]) {
+                        chrome.bookmarks.removetree(a[0], function(a[0]) {
+                            console.log("tree removed: " + a[0]);
+                        });
+                    } else {
+                        chrome.bookmarks.remove(a[0], function(a[0]) {
+                            console.log("leaf removed: " + a[0]);
+                        });
+                    };
+                };
+            });
+        });
+    };
 }
 
 //get tree
@@ -154,35 +226,35 @@ function getList() {
     var curTree = getStorage("cur");
     var bakTree = getStorage("bak");
     var newTree = getStorage("new");
-    if (bakTree != null && curTree != null) {
+    if (newTree != null) {
         console.log("start sync..");
         var newList = compareJson(newTree);
-        aList = [];
-        var bakList = compareJson(bakTree);
         console.log(newList, "new");
-        console.log(bakList, "bak");
     };
 };
 
 
 //different set of the two list
 function getDiff(a, b) {
-    // body...
+    //
 }
 
 //get id from Array
 function compareJson(a) {
     if (a.id != undefined) {
         if (a.url != undefined) {
-            aList.push([a.id, a.index, a.parentId, a.title, a.url]);
+            aList[a.dateAdded] = [a.id, a.index, a.parentId, a.title, a.url];
         };
         if (a.children != undefined) {
             for (var i = 0; i < a.children.length; i++) {
                 //aList.push(a.children[i].id);
                 if (a.children[i].url != undefined) {
                     compareJson(a.children[i]);
-                 } else {
-                    aList.push([a.children[i].id, a.children[i].index, a.children[i].parentId, a.children[i].title]);
+                } else {
+                    aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
+                        a.children[i].parentId, a.children[i].title,
+                        a.children[i].dateGroupModified
+                    ];
                     compareJson(a.children[i]);
                 };
             };
@@ -195,23 +267,17 @@ function compareJson(a) {
 
 //start script
 var treeJson = new Object;
-var UID = "new";
+var UID = "newH";
 var boolTag = false;
-var aList = new Array();
+var aList = {};
 var count = 0;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
     //onload();
 
     getList();
-    var c1 = [1, 5, 5, 5, 9, "5", "5", "", "1", "7"];
-    var c2 = [1, 5, 5, 30, "5", ""];
-    var c3 = [1, 5, ""];
-    var c4 = [1, "5", ""];
-    //console.log(c1.unique());
-    //console.log(c2.unique());
-    //console.log(c1.unique().intersect(c2.unique()));
-   // console.log(c4.intersect(c3));
+    chrome.bookmarks.remove("10");
+
     // document.addEventListener("somethingAPI", function() {
     //     onload();
     // });
