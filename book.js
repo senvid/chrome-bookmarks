@@ -1,31 +1,3 @@
-// function loadXMLDoc(url) {
-//     r = new XMLHttpRequest();
-//     r.onreadystatechange = state_Change;
-//     r.open("GET", url, true);
-//     r.send(null);
-// }
-
-// function state_Change() {
-//     if (r.readyState == 4) {
-//         if (r.status == 200) {
-//             var photos = r.responseXML.getElementsByTagName("img");
-//             console.log(photos);
-//             for (var i = 0; i < photos.length; i++) {
-//                 var photo = photos[i]
-//                 var src = "http://192.168.20.10:8888" + photo.getAttribute("src")
-//                 console.log(src);
-//                 var img = document.createElement("img");
-//                 img.src = src;
-//                 console.log(img.src);
-//                 document.body.appendChild(img);
-//             }
-//         } else {
-//             alert("Problem retrieving XML data");
-//         }
-//     }
-// }
-
-
 //prototype method unique
 //use: myArray.unique()
 Array.prototype.unique = function() {
@@ -128,21 +100,15 @@ function unionHash(a, b) {
     return a;
 }
 
-//sync 
+//sync method
 function sync(a) {
-    // var s = [
-    //     [1, 2, 3],
-    //     [3, 2, 5],
-    //     [5, 6, 1],
-    //     [2, 4, 1],
-    //     [2, 3, 2]
-    // ];
     for (var i in a) {
-        var id = i[0];
-        var index = i[1];
-        var parentId = i[2];
-        var title = i[3];
-        var url = i[4];
+        var id = a[i][0];
+        if (id == "1" || id == "2") continue;
+        var index = a[i][1];
+        var parentId = a[i][2];
+        var title = a[i][3];
+        var url = a[i][4];
         var newNode = {
             "id": id,
             "index": index,
@@ -152,17 +118,17 @@ function sync(a) {
         if (typeof(url) != "number") {
             newNode["url"] = url;
         };
-        chrome.bookmarks.create(newNode, function(id) {
-            console.log("created : " + id);
-            node = chrome.bookmarks.get(a[0], function(node) {
+        chrome.bookmarks.create(newNode, function() {
+            console.log(id);
+            node = chrome.bookmarks.get(a[i][0], function(node) {
                 if (node != undefined) {
                     if (node[0]["url" == undefined]) {
-                        chrome.bookmarks.removetree(a[0], function(a[0]) {
-                            console.log("tree removed: " + a[0]);
+                        chrome.bookmarks.removetree(a[i][0], function() {
+                            console.log("tree removed: " + a[i][0]);
                         });
                     } else {
-                        chrome.bookmarks.remove(a[0], function(a[0]) {
-                            console.log("leaf removed: " + a[0]);
+                        chrome.bookmarks.remove(a[i][0], function() {
+                            console.log("leaf removed: " + a[i][0]);
                         });
                     };
                 };
@@ -175,10 +141,38 @@ function sync(a) {
 function parseTree() {
     var tree = chrome.bookmarks.getTree(
         function(tree) {
-            treeJson = tree;
+            console.log(tree);
+
+            treeJson = compareJson(tree);
             setStorage(boolTag, setStorageCallBack);
         });
 };
+
+//get id from Array
+function compareJson(a) {
+    if (a.id != undefined) {
+        if (a.url != undefined) {
+            aList[a.dateAdded] = [a.id, a.index, a.parentId, a.title, a.url];
+        };
+        if (a.children != undefined) {
+            for (var i = 0; i < a.children.length; i++) {
+                //aList.push(a.children[i].id);
+                if (a.children[i].url != undefined) {
+                    compareJson(a.children[i]);
+                } else {
+                    aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
+                        a.children[i].parentId, a.children[i].title,
+                        a.children[i].dateGroupModified
+                    ];
+                    compareJson(a.children[i]);
+                };
+            };
+        };
+    } else {
+        compareJson(a[0]);
+    };
+    return aList
+}
 
 //first run
 function onload() {
@@ -221,62 +215,30 @@ function onclear() {
     localStorage.clear();
 }
 
-//json to list
-function getList() {
-    var curTree = getStorage("cur");
-    var bakTree = getStorage("bak");
-    var newTree = getStorage("new");
+//json to hash table
+function startSync() {
+    var bakTree = getStorage("newH");
+    var newTree = getStorage("newN");
     if (newTree != null) {
         console.log("start sync..");
-        var newList = compareJson(newTree);
-        console.log(newList, "new");
+        unionHash(newTree, bakTree);
+        var res = sortHash(newTree);
+        sync(res);
     };
 };
 
 
-//different set of the two list
-function getDiff(a, b) {
-    //
-}
-
-//get id from Array
-function compareJson(a) {
-    if (a.id != undefined) {
-        if (a.url != undefined) {
-            aList[a.dateAdded] = [a.id, a.index, a.parentId, a.title, a.url];
-        };
-        if (a.children != undefined) {
-            for (var i = 0; i < a.children.length; i++) {
-                //aList.push(a.children[i].id);
-                if (a.children[i].url != undefined) {
-                    compareJson(a.children[i]);
-                } else {
-                    aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
-                        a.children[i].parentId, a.children[i].title,
-                        a.children[i].dateGroupModified
-                    ];
-                    compareJson(a.children[i]);
-                };
-            };
-        };
-    } else {
-        compareJson(a[0]);
-    };
-    return aList
-}
-
 //start script
 var treeJson = new Object;
-var UID = "newH";
+var UID = "newN";
 var boolTag = false;
 var aList = {};
 var count = 0;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
     //onload();
+    startSync();
 
-    getList();
-    chrome.bookmarks.remove("10");
 
     // document.addEventListener("somethingAPI", function() {
     //     onload();
