@@ -72,7 +72,7 @@ Array.prototype.complement = function(a) {
 }
 
 //array sort method
-function compare(x, y) {
+function sortBy(x, y) {
     if (x[2] == y[2]) {
         return x[1] - y[1];
     } else {
@@ -88,7 +88,8 @@ function sortHash(a) {
         r[i] = a[item];
         i++;
     };
-    r.sort(compare);
+    r.sort(sortBy);
+    console.log(r+"sortHash");
     return r;
 }
 
@@ -110,7 +111,6 @@ function sync(a) {
         var title = a[i][3];
         var url = a[i][4];
         var newNode = {
-            "id": id,
             "index": index,
             "parentId": parentId,
             "title": title
@@ -118,22 +118,51 @@ function sync(a) {
         if (typeof(url) != "number") {
             newNode["url"] = url;
         };
-        chrome.bookmarks.create(newNode, function() {
-            console.log(id);
-            node = chrome.bookmarks.get(a[i][0], function(node) {
-                if (node != undefined) {
-                    if (node[0]["url" == undefined]) {
-                        chrome.bookmarks.removetree(a[i][0], function() {
-                            console.log("tree removed: " + a[i][0]);
-                        });
-                    } else {
-                        chrome.bookmarks.remove(a[i][0], function() {
-                            console.log("leaf removed: " + a[i][0]);
-                        });
-                    };
+        //1.get id----get(id callback)
+        //A no id exist---create(node,callback)
+        //B.id exist---update(id,change obj)
+        node = chrome.bookmarks.get(id, function(node) {
+            if (node != undefined) {
+                //folder
+                if (node[0]["url"]==undefined) {
+                    chrome.bookmarks.removeTree(id,function  () {
+                        console.log("removeTree : "+id);
+                    });
+                } else{
+                    //url
+                    chrome.bookmarks.remove(id,function () {
+                        console.log("remove : "+id);
+                    });
                 };
-            });
+            };
+            chrome.bookmarks.create(newNode, function() {
+                    console.log("created : " + id);
+                });
         });
+
+
+        // node = chrome.bookmarks.get(id, function(node) {
+        //     if (node == undefined) {
+        //         chrome.bookmarks.create(newNode, function() {
+        //             console.log("created : " + id);
+        //         });
+        //     } else {
+        //         var changeInfo;
+        //         if (typeof(url) != "number") {
+        //             changeInfo = {
+        //                 "title": title,
+        //                 "url": url
+        //             };
+        //         } else {
+        //             changeInfo = {
+        //                 "title": title
+        //             };
+        //         };
+        //         chrome.bookmarks.update(id, changeInfo, function() {
+        //             console.log("update : " + id);
+        //         });
+        //     };
+        // });
     };
 }
 
@@ -144,7 +173,7 @@ function parseTree() {
             console.log(tree);
 
             treeJson = compareJson(tree);
-            setStorage(boolTag, setStorageCallBack);
+            setStorage(boolTag, setFalse);
         });
 };
 
@@ -196,10 +225,6 @@ function setStorage(boolTag, call) {
     call();
 }
 
-function setStorageCallBack() {
-    boolTag = false;
-}
-
 //set tag as false
 function setFalse() {
     boolTag = false;
@@ -222,15 +247,17 @@ function startSync() {
     if (newTree != null) {
         console.log("start sync..");
         unionHash(newTree, bakTree);
-        var res = sortHash(newTree);
-        sync(res);
+        var treeJson = sortHash(newTree);
+        //console.log(treeJson);
+        setStorage(true,setFalse);
+        sync(treeJson);
     };
 };
 
 
 //start script
 var treeJson = new Object;
-var UID = "newN";
+var UID = "t";
 var boolTag = false;
 var aList = {};
 var count = 0;
