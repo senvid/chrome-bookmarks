@@ -89,7 +89,7 @@ function sortHash(a) {
         i++;
     };
     r.sort(sortBy);
-    console.log(r+"sortHash");
+    console.log(r + "sortHash");
     return r;
 }
 
@@ -124,20 +124,20 @@ function sync(a) {
         node = chrome.bookmarks.get(id, function(node) {
             if (node != undefined) {
                 //folder
-                if (node[0]["url"]==undefined) {
-                    chrome.bookmarks.removeTree(id,function  () {
-                        console.log("removeTree : "+id);
+                if (node[0]["url"] == undefined) {
+                    chrome.bookmarks.removeTree(id, function() {
+                        console.log("removeTree : " + id);
                     });
-                } else{
+                } else {
                     //url
-                    chrome.bookmarks.remove(id,function () {
-                        console.log("remove : "+id);
+                    chrome.bookmarks.remove(id, function() {
+                        console.log("remove : " + id);
                     });
                 };
             };
             chrome.bookmarks.create(newNode, function() {
-                    console.log("created : " + id);
-                });
+                console.log("created : " + id);
+            });
         });
 
 
@@ -185,14 +185,15 @@ function compareJson(a) {
         };
         if (a.children != undefined) {
             for (var i = 0; i < a.children.length; i++) {
-                //aList.push(a.children[i].id);
                 if (a.children[i].url != undefined) {
                     compareJson(a.children[i]);
                 } else {
-                    aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
-                        a.children[i].parentId, a.children[i].title,
-                        a.children[i].dateGroupModified
-                    ];
+                    if (a.children[i].id != "1" || a.children[i].id != "2") {
+                        aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
+                            a.children[i].parentId, a.children[i].title,
+                            a.children[i].dateGroupModified
+                        ];
+                    };
                     compareJson(a.children[i]);
                 };
             };
@@ -202,6 +203,7 @@ function compareJson(a) {
     };
     return aList
 }
+
 
 //first run
 function onload() {
@@ -249,7 +251,7 @@ function startSync() {
         unionHash(newTree, bakTree);
         var treeJson = sortHash(newTree);
         //console.log(treeJson);
-        setStorage(true,setFalse);
+        setStorage(true, setFalse);
         sync(treeJson);
     };
 };
@@ -263,11 +265,7 @@ var aList = {};
 var count = 0;
 document.addEventListener('DOMContentLoaded', function() {
     console.log("start..");
-    //onload();
-    startSync();
+    onload();
+    //startSync();
 
-
-    // document.addEventListener("somethingAPI", function() {
-    //     onload();
-    // });
 });
