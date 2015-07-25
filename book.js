@@ -142,42 +142,48 @@ function sync(a) {
     };
 }
 
+
+
+// //get id from Array
+// function compareJson(a) {
+//     if (a.id != undefined) {
+//         if (a.url != undefined) {
+//             aList[a.dateAdded] = [a.id, a.index, a.parentId, a.title, a.url];
+//         };
+//         if (a.children != undefined) {
+//             for (var i = 0; i < a.children.length; i++) {
+//                 if (a.children[i].url != undefined) {
+//                     compareJson(a.children[i]);
+//                 } else {
+//                     if (a.children[i].id != "1" || a.children[i].id != "2") {
+//                         aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
+//                             a.children[i].parentId, a.children[i].title,
+//                             a.children[i].dateGroupModified
+//                         ];
+//                     };
+//                     compareJson(a.children[i]);
+//                 };
+//             };
+//         };
+//     } else {
+//         compareJson(a[0]);
+//     };
+//     return aList
+// }
+
 //get tree
-function parseTree() {
+function parseTree(callback) {
     var tree = chrome.bookmarks.getTree(
-        function(tree) {
-            //setStorage(boolTag, setFalse);
+        function(tree, callback) {
             treeJson = tree;
             setStorage(true, setFalse);
         });
+    if (callback) {
+        callback();
+    };
 };
 
-//get id from Array
-function compareJson(a) {
-    if (a.id != undefined) {
-        if (a.url != undefined) {
-            aList[a.dateAdded] = [a.id, a.index, a.parentId, a.title, a.url];
-        };
-        if (a.children != undefined) {
-            for (var i = 0; i < a.children.length; i++) {
-                if (a.children[i].url != undefined) {
-                    compareJson(a.children[i]);
-                } else {
-                    if (a.children[i].id != "1" || a.children[i].id != "2") {
-                        aList[a.children[i].dateAdded] = [a.children[i].id, a.children[i].index,
-                            a.children[i].parentId, a.children[i].title,
-                            a.children[i].dateGroupModified
-                        ];
-                    };
-                    compareJson(a.children[i]);
-                };
-            };
-        };
-    } else {
-        compareJson(a[0]);
-    };
-    return aList
-}
+
 
 
 //first run
@@ -193,15 +199,14 @@ function onload() {
 //set localStorage
 function setStorage(boolTag, call) {
     //if true call setStorage
-    if (!boolTag) {
-        console.log("DO not need to set Storage...");
-        return
+    if (boolTag) {
+        console.log("start set Storage : " + UID);
+        localStorage.setItem(UID, JSON.stringify(treeJson));
+        if (call) {
+            call();
+        };
     };
-    console.log("start set Storage");
-    localStorage.setItem(UID, JSON.stringify(treeJson));
-    if (call) {
-        call();
-    };
+
 }
 
 //set tag as false
@@ -214,37 +219,28 @@ function getStorage(UID) {
     return JSON.parse(localStorage.getItem(UID));
 }
 
+//remove Item
+function removeItem(item) {
+    localStorage.removeItem(item);
+}
+
 //clear local data
 function onclear() {
     localStorage.clear();
 }
 
 //json to hash table
-function startSync() {
+function mergerSync() {
+    var rtm = getStorage("old");
+    var local = getStorage(UID);
 
-    var b = getStorage("old");
-    var a = getStorage("new");
-    console.log("start sync ..");
-    var aList = a[0]["children"][0]["children"];
-    aList = aList.concat(a[0]["children"][1]["children"]);
-    console.log("aList.length : " + aList.length);
-    var bList = b[0]["children"][0]["children"];
-    bList = bList.concat(b[0]["children"][1]["children"]);
-    console.log("bList.length : " + bList.length);
-
-    for (var i = 0; i < bList.length; i++) {
-        console.log(bList[i]);
-    };
-
-    var tag = getList(aList);
-
-    // console.log(tag);
-    // console.log(bList[5]);
-    // console.log(bList[3].children);
-    //console.log(bList[3].children.length);
-    // console.log(bList[5].children[0].children.length);
-    // console.log(bList[5].children[0].children[0].parentId);
-    mergerBookMarks(tag, aList, bList);
+    console.log("start merger ..");
+    var localList = local[0]["children"][0]["children"];
+    localList = localList.concat(local[0]["children"][1]["children"]);
+    var rtmList = rtm[0]["children"][0]["children"];
+    rtmList = rtmList.concat(rtm[0]["children"][1]["children"]);
+    var tag = getList(localList);
+    mergerBookMarks(tag, localList, rtmList);
 }
 
 //
@@ -262,7 +258,7 @@ function getList(a) {
     return tag;
 }
 
-//
+//merger logic
 function mergerBookMarks(curList, cur, bak) {
     var titleUrl;
     for (var i = 0; i < bak.length; i++) {
@@ -278,12 +274,12 @@ function mergerBookMarks(curList, cur, bak) {
             //folder existed--megre folder
         } else if (indexCur != -1 && b.url == undefined) {
             var pId = cur[indexCur].id;
-            var tag = getList(cur[indexCur]["children"]);
+            var tag = getList(cur[indexCur].children);
 
             for (var j = 0; j < b.children.length; j++) {
-                b["children"][j].parentId = pId;
+                b.children[j].parentId = pId;
             };
-            mergerBookMarks(tag, cur[indexCur]["children"], b.children);
+            mergerBookMarks(tag, cur[indexCur].children, b.children);
         };
     };
 }
@@ -306,36 +302,109 @@ function processBookMarks(node) {
         console.log(saveNode);
         delete node["children"];
         delete node["dateGroupModified"];
-        var folder = chrome.bookmarks.create(node, function(folder) {
-            console.log("create folder: " + node["title"]);
-            //change sub node parentId
-            var pId = folder.id;
-            for (var j = 0; j < saveNode.length; j++) {
-                saveNode[j].parentId = pId;
-                processBookMarks(saveNode[j]);
+        var folder = chrome.bookmarks.create(node,
+            function(folder) {
+                console.log("create folder: " + node["title"]);
+                //change sub node parentId
+                var pId = folder.id;
+                for (var j = 0; j < saveNode.length; j++) {
+                    saveNode[j].parentId = pId;
+                    processBookMarks(saveNode[j]);
+                };
+            });
+    };
+}
+
+//cover sync
+function coverSync() {
+    var rtm = getStorage("old");
+    var local = getStorage(UID);
+
+    console.log("start cover ..");
+
+    var cur = local[0]["children"][0]["children"];
+    cur = cur.concat(local[0]["children"][1]["children"]);
+    var bak = rtm[0]["children"][0]["children"];
+    bak = bak.concat(rtm[0]["children"][1]["children"]);
+
+    var curList = getList(cur);
+    var bakList = getList(bak);
+
+    coverBookMarks(bakList, bak, cur);
+    mergerBookMarks(curList, cur, bak);
+
+}
+
+//cover logic
+function coverBookMarks(bakList, bak, cur) {
+    var titleUrl;
+    for (var i = 0; i < cur.length; i++) {
+        var c = cur[i];
+        if (c.url) {
+            titleUrl = c.url;
+        } else {
+            titleUrl = c.title;
+        };
+        var indexBak = bakList.indexOf(titleUrl);
+        if (indexBak == -1) {
+            if (c.url) {
+                try {
+                    chrome.bookmarks.remove(String(c.id),
+                        function() {
+                            console.log("node removed " + c.id);
+                        });
+                } catch (err) {
+                    console.log(err.message);
+                };
+            } else if (c.children) {
+                try {
+                    chrome.bookmarks.removeTree(String(c.id),
+                        function() {
+                            console.log("tree removed " + c.id);
+                        });
+                } catch (err) {
+                    console.log(err.message);
+                };
             };
-        });
+        } else if (indexBak != -1 && c.url == undefined) {
+            var childTag = getList(bak[indexBak].children);
+            coverBookMarks(childTag, bak[indexBak].children, c.children);
+        };
     };
 }
 
 //start script
-var treeJson = new Object;
-var UID = "old";
+var treeJson;
+var UID;
 var boolTag = false;
-//var aList = {};
-var count = 0;
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("start..");
-    //onload();
-    startSync();
-    // var m = chrome.bookmarks.create({
-    //     //"dateAdded": 1404652836999,
-    //     //"id": "1400",
-    //     "index": 0,
-    //     "parentId": "1",
-    //     "title": "a",
-    //     "url": null
-    // }, function(m) {
-    //     console.log(m.id);
-    // });
-});
+// document.addEventListener('DOMContentLoaded', function() {
+//     console.log("start..");
+//     //onload();
+//     //coverSync();
+// });
+console.log("start..");
+
+$(document).ready(function() {
+    function test() {
+        console.log("running..");
+    }
+    var d = new Date();
+    console.log("coverSync start..")
+    UID = d.getTime();
+    parseTree(coverSync);
+    console.log("coverSync end.");
+
+    $("#CoverStart").click(function() {
+        console.log("coverSync start..")
+        UID = d.getTime();
+        parseTree(coverSync);
+        console.log("coverSync end.");
+    })
+
+    $("#MergerStart").click(function() {
+        console.log("mergerSync start.");
+        UID = d.getTime();
+        parseTree(mergerSync);
+        console.log("mergerSync end.");
+    })
+})
