@@ -171,47 +171,16 @@ function sync(a) {
 //     return aList
 // }
 
-//get tree
-function parseTree(callback) {
-    var tree = chrome.bookmarks.getTree(
-        function(tree, callback) {
-            treeJson = tree;
-            setStorage(true, setFalse);
-        });
-    if (callback) {
-        callback();
-    };
-};
-
-
-
-
-//first run
-function onload() {
-    if (getStorage(UID) != null) {
-        console.log("get localStorage..")
-    } else {
-        boolTag = true;
-        parseTree();
-    };
-}
 
 //set localStorage
-function setStorage(boolTag, call) {
-    //if true call setStorage
-    if (boolTag) {
-        console.log("start set Storage : " + UID);
-        localStorage.setItem(UID, JSON.stringify(treeJson));
-        if (call) {
-            call();
-        };
+function setStorage(UID, data, call) {
+    console.log("start set Storage : " + UID);
+    localStorage.setItem(UID, JSON.stringify(data));
+    if (call) {
+        console.log("data saved..start callback..");
+        call(UID);
+        console.log("callback end ..");
     };
-
-}
-
-//set tag as false
-function setFalse() {
-    boolTag = false;
 }
 
 //get localStorage
@@ -230,7 +199,7 @@ function onclear() {
 }
 
 //json to hash table
-function mergerSync() {
+function mergerSync(UID) {
     var rtm = getStorage("old");
     var local = getStorage(UID);
 
@@ -316,10 +285,11 @@ function processBookMarks(node) {
 }
 
 //cover sync
-function coverSync() {
+function coverSync(UID) {
     var rtm = getStorage("old");
     var local = getStorage(UID);
 
+    console.log(local);
     console.log("start cover ..");
 
     var cur = local[0]["children"][0]["children"];
@@ -373,10 +343,11 @@ function coverBookMarks(bakList, bak, cur) {
     };
 }
 
-//start script
-var treeJson;
-var UID;
-var boolTag = false;
+function test() {
+    console.log("running..");
+}
+
+
 // document.addEventListener('DOMContentLoaded', function() {
 //     console.log("start..");
 //     //onload();
@@ -385,26 +356,39 @@ var boolTag = false;
 console.log("start..");
 
 $(document).ready(function() {
-    function test() {
-        console.log("running..");
-    }
-    var d = new Date();
-    console.log("coverSync start..")
-    UID = d.getTime();
-    parseTree(coverSync);
-    console.log("coverSync end.");
 
     $("#CoverStart").click(function() {
+
+        var d = new Date();
+        var UID = d.getTime();
+        console.log(UID);
         console.log("coverSync start..")
-        UID = d.getTime();
-        parseTree(coverSync);
+        var tree = chrome.bookmarks.getTree(function(tree) {
+            setStorage(UID, tree, coverSync);
+        });
         console.log("coverSync end.");
     })
 
     $("#MergerStart").click(function() {
+        var d = new Date();
+        var UID = d.getTime();
+        console.log(UID);
         console.log("mergerSync start.");
         UID = d.getTime();
-        parseTree(mergerSync);
+        var tree = chrome.bookmarks.getTree(function(tree) {
+            setStorage(UID, tree, mergerSync);
+        });
         console.log("mergerSync end.");
+    })
+
+    $("#upload").click(function() {
+        function msg(UID) {
+            console.log(UID + " data saved..");
+        }
+        var UID = "old";
+        console.log("start upload..");
+        var tree = chrome.bookmarks.getTree(function(tree) {
+            setStorage(UID, tree,msg);
+        });
     })
 })
