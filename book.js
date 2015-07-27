@@ -259,14 +259,14 @@ function processBookMarks(node) {
         //delete ingron attribute
         delete node["dateAdded"];
         delete node["id"];
-        delete node["index"];
+        //delete node["index"];
         chrome.bookmarks.create(node, function() {
             console.log("create url: " + node["url"]);
         });
     } else {
         delete node["dateAdded"];
         delete node["id"];
-        delete node["index"];
+        //delete node["index"];
         var saveNode = node["children"];
         console.log(saveNode);
         delete node["children"];
@@ -358,7 +358,6 @@ console.log("start..");
 $(document).ready(function() {
 
     $("#CoverStart").click(function() {
-
         var d = new Date();
         var UID = d.getTime();
         console.log(UID);
@@ -388,7 +387,7 @@ $(document).ready(function() {
         var UID = "old";
         console.log("start upload..");
         var tree = chrome.bookmarks.getTree(function(tree) {
-            setStorage(UID, tree,msg);
+            setStorage(UID, tree, msg);
         });
     })
 })
